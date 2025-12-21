@@ -35,14 +35,7 @@ class AdminController {
         }
     }
 
-    async getFailedJobs(req, res) {
-        try {
-            const result = await adminRepository.getFailedJobs();
-            return sendResponse(res, 200, 'Failed jobs', result);
-        } catch (err) {
-            return sendError(res, 500, err.message);
-        }
-    }
+
 
     async getStats(req, res) {
         try {

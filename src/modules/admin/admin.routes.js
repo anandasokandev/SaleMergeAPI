@@ -12,7 +12,7 @@ router.use(authorize('ADMIN'));
 router.get('/users', (req, res) => adminController.getUsers(req, res));
 router.get('/videos', (req, res) => adminController.getVideos(req, res));
 router.delete('/videos/:id', (req, res) => adminController.deleteVideo(req, res));
-router.get('/jobs/failed', (req, res) => adminController.getFailedJobs(req, res));
+
 router.get('/stats', (req, res) => adminController.getStats(req, res));
 
 module.exports = router;
