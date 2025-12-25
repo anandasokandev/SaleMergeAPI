@@ -13,6 +13,16 @@ const loginSchema = Joi.object({
     password: Joi.string().required()
 });
 
+const forgotPasswordSchema = Joi.object({
+    email: Joi.string().email().required()
+});
+
+const resetPasswordSchema = Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).required(),
+    newPassword: Joi.string().min(6).required()
+});
+
 class AuthController {
     async signup(req, res) {
         try {
@@ -44,6 +54,42 @@ class AuthController {
         } catch (err) {
             if (err.message === 'Invalid credentials') {
                 return sendError(res, 401, err.message);
+            }
+            return sendError(res, 500, err.message);
+        }
+    }
+
+    async forgotPassword(req, res) {
+        try {
+            const { error, value } = forgotPasswordSchema.validate(req.body);
+            if (error) return sendError(res, 400, error.details[0].message);
+
+            const result = await authService.forgotPassword(value.email);
+            return sendResponse(res, 200, true, result.message);
+        } catch (err) {
+            if (err.message === 'User not found') {
+                // Determine if we should reveal user existence. For security, usually returns success anyway or specific error.
+                // Here proceeding with error for simplicity as per common dev practices, or could return 200 to avoid enumeration.
+                // Let's return 404 for now for easier debugging by user.
+                return sendError(res, 404, err.message);
+            }
+            return sendError(res, 500, err.message);
+        }
+    }
+
+    async resetPassword(req, res) {
+        try {
+            const { error, value } = resetPasswordSchema.validate(req.body);
+            if (error) return sendError(res, 400, error.details[0].message);
+
+            const result = await authService.resetPassword(value.email, value.otp, value.newPassword);
+            return sendResponse(res, 200, true, result.message);
+        } catch (err) {
+            if (err.message === 'Invalid OTP' || err.message === 'OTP expired') {
+                return sendError(res, 400, err.message);
+            }
+            if (err.message === 'User not found') {
+                return sendError(res, 404, err.message);
             }
             return sendError(res, 500, err.message);
         }

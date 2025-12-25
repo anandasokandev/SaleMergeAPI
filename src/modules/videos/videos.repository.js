@@ -32,11 +32,24 @@ class VideoRepository {
         return { videos: rows, total: count[0].total };
     }
 
-    async updateStatus(id, status, outputPath = null) {
-        const query = outputPath
-            ? 'UPDATE videos SET status = ?, output_video_path = ? WHERE id = ?'
-            : 'UPDATE videos SET status = ? WHERE id = ?';
-        const params = outputPath ? [status, outputPath, id] : [status, id];
+    async updateStatus(id, status, outputPath = null, driveLink = null) {
+        let query = 'UPDATE videos SET status = ?';
+        const params = [status];
+
+        if (outputPath) {
+            query += ', output_video_path = ?';
+            params.push(outputPath);
+        }
+
+        if (driveLink) {
+            query += ', drive_link = ?';
+            params.push(driveLink);
+        }
+
+        query += ' WHERE id = ?';
+        params.push(id);
+
+        console.log('Executing DB Update:', query, params);
 
         await pool.query(query, params);
     }

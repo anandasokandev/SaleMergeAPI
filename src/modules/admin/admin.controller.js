@@ -14,6 +14,32 @@ class AdminController {
         }
     }
 
+    async toggleUserStatus(req, res) {
+        try {
+            const { id } = req.params;
+            const { is_active } = req.body; // Expect boolean
+            if (typeof is_active !== 'boolean') return sendError(res, 400, 'is_active must be boolean');
+
+            await userRepository.toggleStatus(id, is_active);
+            return sendResponse(res, 200, 'User status updated');
+        } catch (err) {
+            return sendError(res, 500, err.message);
+        }
+    }
+
+    async updateUserCredits(req, res) {
+        try {
+            const { id } = req.params;
+            const { credits } = req.body;
+            if (typeof credits !== 'number') return sendError(res, 400, 'credits must be number');
+
+            await userRepository.updateCredits(id, credits);
+            return sendResponse(res, 200, 'User credits updated');
+        } catch (err) {
+            return sendError(res, 500, err.message);
+        }
+    }
+
     async getVideos(req, res) {
         try {
             const { limit, offset } = req.query;

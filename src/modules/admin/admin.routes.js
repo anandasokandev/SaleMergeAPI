@@ -10,6 +10,12 @@ router.use(authenticate);
 router.use(authorize('ADMIN'));
 
 router.get('/users', (req, res) => adminController.getUsers(req, res));
+router.patch('/users/:id/status', (req, res) => adminController.toggleUserStatus(req, res));
+router.post('/users/:id/status', (req, res) => adminController.toggleUserStatus(req, res)); // Alias for POST
+
+router.patch('/users/:id/credits', (req, res) => adminController.updateUserCredits(req, res));
+router.post('/users/:id/credits', (req, res) => adminController.updateUserCredits(req, res)); // Alias for POST
+
 router.get('/videos', (req, res) => adminController.getVideos(req, res));
 router.delete('/videos/:id', (req, res) => adminController.deleteVideo(req, res));
 
