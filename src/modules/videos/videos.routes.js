@@ -9,6 +9,7 @@ router.use(authenticate); // ALL video routes require auth
 
 router.post('/generate', (req, res) => videoController.createRequest(req, res));
 router.get('/', (req, res) => videoController.listMyVideos(req, res));
+router.get('/user/:userId', (req, res) => videoController.listUserVideos(req, res));
 router.get('/:id', (req, res) => videoController.getOne(req, res));
 
 module.exports = router;

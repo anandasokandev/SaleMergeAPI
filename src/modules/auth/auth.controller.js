@@ -3,6 +3,7 @@ const { sendResponse, sendError } = require('../../utils/response');
 const Joi = require('joi');
 
 const signupSchema = Joi.object({
+    name: Joi.string().min(2).optional(),
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
     role: Joi.string().valid('USER', 'ADMIN').required()
@@ -36,7 +37,7 @@ class AuthController {
                 return sendError(res, 400, 'Invalid request data');
             }
 
-            const result = await authService.signup(value.email, value.password, value.role);
+            const result = await authService.signup(value.email, value.password, value.role, value.name);
             return sendResponse(res, 201, true, 'User created successfully', result);
         } catch (err) {
             console.error('Signup Error:', err);

@@ -1,10 +1,10 @@
 const pool = require('../../config/database');
 
 class UserRepository {
-    async create(email, passwordHash, role = 'USER') {
+    async create(email, passwordHash, role = 'USER', name = null) {
         const [result] = await pool.query(
-            'INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)',
-            [email, passwordHash, role]
+            'INSERT INTO users (email, password_hash, role, name) VALUES (?, ?, ?, ?)',
+            [email, passwordHash, role, name]
         );
         return result.insertId;
     }
@@ -15,16 +15,30 @@ class UserRepository {
     }
 
     async findById(id) {
-        const [rows] = await pool.query('SELECT id, email, role, created_at, credits, is_active FROM users WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT id, name, email, role, created_at, credits, is_active FROM users WHERE id = ?', [id]);
         return rows[0];
     }
 
-    async findAll(limit = 10, offset = 0) {
-        const [rows] = await pool.query(
-            'SELECT id, email, role, created_at, credits, is_active FROM users LIMIT ? OFFSET ?',
-            [limit, offset]
-        );
-        const [countResult] = await pool.query('SELECT COUNT(*) as total FROM users');
+    async findAll(limit = 10, offset = 0, search = '') {
+        let query = 'SELECT id, name, email, role, created_at, credits, is_active FROM users';
+        let countQuery = 'SELECT COUNT(*) as total FROM users';
+        let params = [];
+
+        if (search) {
+            query += ' WHERE email LIKE ? OR name LIKE ?';
+            countQuery += ' WHERE email LIKE ? OR name LIKE ?';
+            params.push(`%${search}%`, `%${search}%`);
+        }
+
+        query += ' LIMIT ? OFFSET ?';
+        params.push(limit, offset);
+
+        const [rows] = await pool.query(query, params);
+
+        // Correctly handle parameters for count query
+        const countParams = search ? [`%${search}%`, `%${search}%`] : [];
+        const [countResult] = await pool.query(countQuery, countParams);
+
         return { users: rows, total: countResult[0].total };
     }
 
@@ -65,6 +79,26 @@ class UserRepository {
             'UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
             [passwordHash, id]
         );
+    }
+
+    async update(id, updateData) {
+        const allowedFields = ['email', 'role', 'credits', 'is_active', 'name'];
+        const updates = [];
+        const params = [];
+
+        Object.keys(updateData).forEach(key => {
+            if (allowedFields.includes(key)) {
+                updates.push(`${key} = ?`);
+                params.push(updateData[key]);
+            }
+        });
+
+        if (updates.length === 0) return; // Nothing to update
+
+        params.push(id);
+        const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+
+        await pool.query(query, params);
     }
 }
 

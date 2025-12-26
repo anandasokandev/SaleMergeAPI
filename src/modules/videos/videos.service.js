@@ -54,7 +54,33 @@ class VideoService {
 
             // 2. Generate Quote Video (End)
             log(`Generating quote video for video ${videoId}`);
-            await ffmpegService.generateTextVideo(quote, tempQuoteVideo);
+
+            let quoteContent = quote;
+            let fontSize = 64;
+
+            if (typeof quote === 'object' && quote !== null) {
+                const body = [
+                    { label: 'Sum Insured', value: quote.sum_insured },
+                    { label: 'Cover Type', value: quote.cover_type },
+                    { label: 'Policy Term', value: `${quote.policy_term} Year` }
+                ];
+
+                if (quote.addons && quote.addons.length > 0) {
+                    quote.addons.forEach(addon => {
+                        body.push({ label: addon.name, value: addon.price });
+                    });
+                }
+
+                quoteContent = {
+                    type: 'receipt',
+                    header: `Dear ${name},\nthe quote for ${quote.plan_name} is detailed below:`,
+                    body: body,
+                    total: quote.total_premium
+                };
+                fontSize = 32;
+            }
+
+            await ffmpegService.generateTextVideo(quoteContent, tempQuoteVideo, { fontSize });
 
             // 3. Merge Videos
             log(`Merging videos for video ${videoId}`);
@@ -167,8 +193,8 @@ class VideoService {
         }
     }
 
-    async getUserVideos(userId) {
-        return await videoRepository.findAllByUser(userId);
+    async getUserVideos(userId, limit = 20, offset = 0) {
+        return await videoRepository.findAllByUser(userId, limit, offset);
     }
 
     async getVideoById(videoId) {

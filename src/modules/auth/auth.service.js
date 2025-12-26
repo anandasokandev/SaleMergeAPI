@@ -5,7 +5,7 @@ const sendEmail = require('../../utils/email');
 const crypto = require('crypto');
 
 class AuthService {
-    async signup(email, password, role) {
+    async signup(email, password, role, name) {
         const existingUser = await userRepository.findByEmail(email);
         if (existingUser) {
             throw new Error('User already exists');
@@ -14,8 +14,8 @@ class AuthService {
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        const userId = await userRepository.create(email, passwordHash, role);
-        return { userId, email, role };
+        const userId = await userRepository.create(email, passwordHash, role, name);
+        return { userId, email, role, name };
     }
 
     async login(email, password) {
@@ -30,7 +30,7 @@ class AuthService {
         }
 
         const token = this.generateToken(user);
-        return { user: { id: user.id, email: user.email, role: user.role }, token };
+        return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, token };
     }
 
     generateToken(user) {
