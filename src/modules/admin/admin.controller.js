@@ -162,7 +162,8 @@ class AdminController {
             if (typeof is_active !== 'boolean') return sendError(res, 400, 'is_active must be boolean');
 
             await userRepository.toggleStatus(id, is_active);
-            return sendResponse(res, 200, 'User status updated');
+            const updatedUser = await userRepository.findById(id);
+            return sendResponse(res, 200, 'User status updated', updatedUser);
         } catch (err) {
             return sendError(res, 500, err.message);
         }
@@ -175,7 +176,8 @@ class AdminController {
             if (typeof credits !== 'number') return sendError(res, 400, 'credits must be number');
 
             await userRepository.updateCredits(id, credits);
-            return sendResponse(res, 200, 'User credits updated');
+            const updatedUser = await userRepository.findById(id);
+            return sendResponse(res, 200, 'User credits updated', updatedUser);
         } catch (err) {
             return sendError(res, 500, err.message);
         }

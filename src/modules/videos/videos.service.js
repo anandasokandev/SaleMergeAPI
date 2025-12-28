@@ -20,6 +20,9 @@ class VideoService {
             throw new Error('Insufficient credits. Please check your balance.');
         }
 
+        // Fetch updated user stats
+        const updatedUser = await userRepository.findById(userId);
+
         // 1. Create record in Video Table
         const videoId = await videoRepository.create(userId, JSON.stringify({ name, quote, selectedVideos: videosToProcess }), baseVideoPath);
 
@@ -28,7 +31,12 @@ class VideoService {
             error(`Background processing failed for video ${videoId}`, err);
         });
 
-        return { videoId, status: 'PENDING' };
+        return {
+            videoId,
+            status: 'PENDING',
+            credits: updatedUser.credits,
+            downloads_count: updatedUser.downloads_count
+        };
     }
 
     async processVideoGeneration(videoId, userId, name, quote, selectedVideos, baseVideoPath) {
@@ -61,8 +69,7 @@ class VideoService {
             if (typeof quote === 'object' && quote !== null) {
                 const body = [
                     { label: 'Sum Insured', value: quote.sum_insured },
-                    { label: 'Cover Type', value: quote.cover_type },
-                    { label: 'Policy Term', value: `${quote.policy_term} Year` }
+                    { label: 'Cover Type', value: quote.cover_type }
                 ];
 
                 if (quote.addons && quote.addons.length > 0) {

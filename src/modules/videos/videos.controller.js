@@ -9,7 +9,6 @@ const generateSchema = Joi.object({
         plan_name: Joi.string().required(),
         sum_insured: Joi.string().required(),
         cover_type: Joi.string().required(),
-        policy_term: Joi.string().required(),
         addons: Joi.array().items(
             Joi.object({
                 name: Joi.string().required(),

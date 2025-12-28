@@ -15,7 +15,7 @@ class AuthService {
         const passwordHash = await bcrypt.hash(password, salt);
 
         const userId = await userRepository.create(email, passwordHash, role, name);
-        return { userId, email, role, name };
+        return await userRepository.findById(userId);
     }
 
     async login(email, password) {
@@ -30,7 +30,7 @@ class AuthService {
         }
 
         const token = this.generateToken(user);
-        return { user: { id: user.id, name: user.name, email: user.email, role: user.role }, token };
+        return { user: { id: user.id, name: user.name, email: user.email, role: user.role, credits: user.credits, downloads_count: user.downloads_count }, token };
     }
 
     generateToken(user) {

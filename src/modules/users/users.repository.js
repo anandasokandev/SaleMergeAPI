@@ -15,12 +15,12 @@ class UserRepository {
     }
 
     async findById(id) {
-        const [rows] = await pool.query('SELECT id, name, email, role, created_at, credits, is_active FROM users WHERE id = ?', [id]);
+        const [rows] = await pool.query('SELECT id, name, email, role, created_at, credits, downloads_count, is_active FROM users WHERE id = ?', [id]);
         return rows[0];
     }
 
     async findAll(limit = 10, offset = 0, search = '') {
-        let query = 'SELECT id, name, email, role, created_at, credits, is_active FROM users';
+        let query = 'SELECT id, name, email, role, created_at, credits, downloads_count, is_active FROM users';
         let countQuery = 'SELECT COUNT(*) as total FROM users';
         let params = [];
 
@@ -51,12 +51,14 @@ class UserRepository {
     }
 
     async deductCredit(id) {
-        const [result] = await pool.query('UPDATE users SET credits = credits - 1 WHERE id = ? AND credits > 0', [id]);
+        // Deduct 1 credit and increment downloads_count
+        const [result] = await pool.query('UPDATE users SET credits = credits - 1, downloads_count = downloads_count + 1 WHERE id = ? AND credits > 0', [id]);
         return result.affectedRows > 0;
     }
 
     async addCredit(id) {
-        await pool.query('UPDATE users SET credits = credits + 1 WHERE id = ?', [id]);
+        // Refund 1 credit and decrement downloads_count (revert operation)
+        await pool.query('UPDATE users SET credits = credits + 1, downloads_count = downloads_count - 1 WHERE id = ?', [id]);
     }
 
     async saveResetToken(email, token, expiresAt) {

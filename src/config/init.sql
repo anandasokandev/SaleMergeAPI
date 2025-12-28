@@ -3,6 +3,9 @@
   email VARCHAR(191) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('USER', 'ADMIN') DEFAULT 'USER',
+  credits INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  downloads_count INT DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   reset_token VARCHAR(255),
   reset_token_expires TIMESTAMP DEFAULT NULL
