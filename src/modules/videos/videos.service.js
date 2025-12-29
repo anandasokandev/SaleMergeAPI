@@ -6,7 +6,7 @@ const { log, error } = require('../../utils/logger');
 const sendEmail = require('../../utils/email');
 const googleDriveService = require('../../utils/googleDrive');
 const userRepository = require('../users/users.repository');
-// const jobQueue = require('../../jobs/jobQueue'); // Removed
+
 
 
 class VideoService {
@@ -114,8 +114,7 @@ class VideoService {
 
             await ffmpegService.mergeMultipleVideos(filesToMerge, finalVideo);
 
-            // 3. Update DB - Moved to after upload
-            // await videoRepository.updateStatus(videoId, 'DONE', finalVideo);
+
 
             // Cleanup temp
             if (fs.existsSync(tempNameVideo)) fs.unlinkSync(tempNameVideo);

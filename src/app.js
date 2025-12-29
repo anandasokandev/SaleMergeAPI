@@ -9,6 +9,8 @@ const authRoutes = require('./modules/auth/auth.routes');
 const videoRoutes = require('./modules/videos/videos.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 
+const userRoutes = require('./modules/users/users.routes');
+
 const rateLimit = require('express-rate-limit');
 
 const app = express();
@@ -49,6 +51,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
 
 // Root route
 app.get('/', (req, res) => {

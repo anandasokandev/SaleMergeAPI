@@ -19,6 +19,11 @@ class UserRepository {
         return rows[0];
     }
 
+    async findPasswordById(id) {
+        const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [id]);
+        return rows[0] ? rows[0].password_hash : null;
+    }
+
     async findAll(limit = 10, offset = 0, search = '') {
         let query = 'SELECT id, name, email, role, created_at, credits, downloads_count, is_active FROM users';
         let countQuery = 'SELECT COUNT(*) as total FROM users';
@@ -84,7 +89,7 @@ class UserRepository {
     }
 
     async update(id, updateData) {
-        const allowedFields = ['email', 'role', 'credits', 'is_active', 'name'];
+        const allowedFields = ['email', 'role', 'credits', 'is_active', 'name', 'password_hash'];
         const updates = [];
         const params = [];
 

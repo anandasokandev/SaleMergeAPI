@@ -12,7 +12,6 @@ class AdminRepository {
         };
     }
 
-    // async getFailedJobs ... removed as queue is gone
 }
 
 module.exports = new AdminRepository();
