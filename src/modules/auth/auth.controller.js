@@ -5,7 +5,12 @@ const Joi = require('joi');
 const signupSchema = Joi.object({
     name: Joi.string().min(2).optional(),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
+    password: Joi.string().min(8)
+        .pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')) // Example: Alphanumeric only, just for demo of pattern. Real world needs more complex one.
+        // Better pattern for: min 8, 1 up, 1 low, 1 num, 1 special
+        .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,})'))
+        .message('Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one number, and one special character.')
+        .required(),
     role: Joi.string().valid('USER', 'ADMIN').required()
 });
 
@@ -51,10 +56,22 @@ class AuthController {
             if (error) return sendError(res, 400, error.details[0].message);
 
             const result = await authService.login(value.email, value.password);
+
+            // Set HttpOnly cookie
+            res.cookie('token', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', // true in production
+                sameSite: 'strict',
+                maxAge: 24 * 60 * 60 * 1000 // 1 day
+            });
+
             return sendResponse(res, 200, true, 'Login successful', result);
         } catch (err) {
             if (err.message === 'Invalid credentials') {
                 return sendError(res, 401, err.message);
+            }
+            if (err.message === 'Account is disabled. Please contact support.') {
+                return sendError(res, 403, err.message);
             }
             return sendError(res, 500, err.message);
         }

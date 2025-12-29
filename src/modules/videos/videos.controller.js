@@ -3,20 +3,12 @@ const { sendResponse, sendError } = require('../../utils/response');
 const Joi = require('joi');
 
 const generateSchema = Joi.object({
-    name: Joi.string().min(3).required(),
+    name: Joi.string().min(3).pattern(new RegExp('^[a-zA-Z0-9 _-]+$')).message('Name contains invalid characters').required(),
     quote: Joi.string().optional(),
     quote_details: Joi.object({
         plan_name: Joi.string().required(),
-        sum_insured: Joi.string().required(),
-        cover_type: Joi.string().required(),
-        addons: Joi.array().items(
-            Joi.object({
-                name: Joi.string().required(),
-                price: Joi.string().required()
-            })
-        ).optional(),
         total_premium: Joi.string().required()
-    }).optional(),
+    }).unknown().optional(),
     videos: Joi.array().items(Joi.number().min(1).max(7)).optional(),
     video: Joi.number().min(1).max(7).optional() // Backward compatibility
 });

@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const errorHandler = require('./middlewares/error.middleware');
 
 const authRoutes = require('./modules/auth/auth.routes');
@@ -18,6 +19,7 @@ const app = express();
 // Parse body params and attache them to req.body
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Debug middleware to check headers
 app.use((req, res, next) => {

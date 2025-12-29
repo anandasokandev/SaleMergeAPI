@@ -4,12 +4,22 @@ const { sendError } = require('../utils/response');
 const userRepository = require('../modules/users/users.repository');
 
 const authenticate = async (req, res, next) => {
+    let token;
+
+    // Check header
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+    }
+    // Check cookie
+    else if (req.cookies && req.cookies.token) {
+        token = req.cookies.token;
+    }
+
+    if (!token) {
         return sendError(res, 401, 'Access denied. No token provided.');
     }
 
-    const token = authHeader.split(' ')[1];
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
