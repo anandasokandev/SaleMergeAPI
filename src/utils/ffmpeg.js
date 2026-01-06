@@ -137,12 +137,12 @@ const generateTextVideo = (content, outputPath, options = {}) => {
         }
 
         // Ensure there is an audio stream for concat consistency
-        filterChain.push('[2:a]atrim=duration=5[outa]');
+        filterChain.push('[2:a]atrim=duration=3[outa]');
 
         ffmpeg()
-            .input('color=c=#FFA500:s=1280x720:d=5')
+            .input('color=c=#FFA500:s=1280x720:d=3')
             .inputFormat('lavfi')
-            .input('color=c=#00FFFF:s=1280x720:d=5')
+            .input('color=c=#00FFFF:s=1280x720:d=3')
             .inputFormat('lavfi')
             .input('anullsrc=channel_layout=stereo:sample_rate=44100')
             .inputFormat('lavfi')
@@ -151,6 +151,8 @@ const generateTextVideo = (content, outputPath, options = {}) => {
             .outputOptions('-map [outa]')
             .outputOptions('-c:a aac')
             .outputOptions('-pix_fmt yuv420p')
+            .outputOptions('-preset ultrafast') // Speed optimization
+            .outputOptions('-r 30')
             .save(outputPath)
             .on('end', () => resolve(outputPath))
             .on('error', (err) => {
