@@ -108,13 +108,20 @@ const generateTextVideo = (content, outputPath, options = {}) => {
             filterChain.push(`[bg]drawtext=fontfile='${fontFile}':text='${safeText}':fontsize=${fontSize}:fontcolor=${fontColor}:x=(w-text_w)/2:y=(h-text_h)/2:box=1:boxcolor=white@0.85:boxborderw=60[outv]`);
         }
 
+        // Ensure there is an audio stream for concat consistency
+        filterChain.push('[2:a]atrim=duration=5[outa]');
+
         ffmpeg()
             .input('color=c=#FFA500:s=1280x720:d=5')
             .inputFormat('lavfi')
             .input('color=c=#00FFFF:s=1280x720:d=5')
             .inputFormat('lavfi')
+            .input('anullsrc=channel_layout=stereo:sample_rate=44100')
+            .inputFormat('lavfi')
             .complexFilter(filterChain)
             .outputOptions('-map [outv]')
+            .outputOptions('-map [outa]')
+            .outputOptions('-c:a aac')
             .outputOptions('-pix_fmt yuv420p')
             .save(outputPath)
             .on('end', () => resolve(outputPath))
@@ -139,15 +146,20 @@ const mergeMultipleVideos = (videoPaths, outputPath) => {
             ffmpegCommand.input(videoPath);
             // Add scale/pad filter for each input
             filterString += `[${index}:v]scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,format=yuv420p[v${index}];`;
-            concatInputs += `[v${index}]`;
+
+            // Normalize audio for consistency (requires all inputs to have audio)
+            filterString += `[${index}:a]aformat=sample_rates=44100:channel_layouts=stereo[a${index}];`;
+
+            concatInputs += `[v${index}][a${index}]`;
         });
 
         // Add concat filter
-        filterString += `${concatInputs}concat=n=${videoPaths.length}:v=1:a=0[v]`;
+        filterString += `${concatInputs}concat=n=${videoPaths.length}:v=1:a=1[v][a]`;
 
         ffmpegCommand
             .complexFilter(filterString)
             .outputOptions('-map [v]')
+            .outputOptions('-map [a]')
             .save(outputPath)
             .on('end', () => resolve(outputPath))
             .on('error', (err) => {

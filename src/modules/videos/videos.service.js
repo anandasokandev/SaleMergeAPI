@@ -58,7 +58,7 @@ class VideoService {
 
             // 1. Generate Name Video (Start)
             log(`Generating name video for video ${videoId}`);
-            await ffmpegService.generateTextVideo(name, tempNameVideo);
+            await ffmpegService.generateTextVideo(`Dear ${name}`, tempNameVideo);
 
             // 2. Generate Quote Video (End)
             log(`Generating quote video for video ${videoId}`);
@@ -69,7 +69,8 @@ class VideoService {
             if (typeof quote === 'object' && quote !== null) {
                 const body = [
                     { label: 'Sum Insured', value: quote.sum_insured },
-                    { label: 'Cover Type', value: quote.cover_type }
+                    { label: 'Cover Type', value: quote.cover_type },
+                    { label: 'Base Premium', value: quote.base_premium }
                 ];
 
                 if (quote.addons && quote.addons.length > 0) {
@@ -94,12 +95,20 @@ class VideoService {
 
             const filesToMerge = [];
 
-            // Order: Name -> Base -> [Selected Videos] -> Quote
+            // Order: Name -> Base -> [Optional Intro] -> [Selected Videos] -> EndVideo -> Quote
 
             filesToMerge.push(tempNameVideo);
             filesToMerge.push(baseVideoPath);
 
             if (selectedVideos && selectedVideos.length > 0) {
+                // Add optional_intro if available
+                const optionalIntroPath = path.join(process.cwd(), 'assets', 'optional_intro.mp4');
+                if (fs.existsSync(optionalIntroPath)) {
+                    filesToMerge.push(optionalIntroPath);
+                } else {
+                    log(`Warning: Optional Intro Video not found at ${optionalIntroPath}, skipping.`);
+                }
+
                 for (const videoNum of selectedVideos) {
                     const vPath = path.join(process.cwd(), 'assets', 'videos', `${videoNum}.mp4`);
                     if (fs.existsSync(vPath)) {
@@ -108,6 +117,13 @@ class VideoService {
                         log(`Warning: Selected video ${videoNum} not found, skipping.`);
                     }
                 }
+            }
+
+            const endVideoPath = path.join(process.cwd(), 'assets', 'EndVideo.mp4');
+            if (fs.existsSync(endVideoPath)) {
+                filesToMerge.push(endVideoPath);
+            } else {
+                log(`Warning: EndVideo not found at ${endVideoPath}, skipping.`);
             }
 
             filesToMerge.push(tempQuoteVideo);
@@ -129,6 +145,12 @@ class VideoService {
                 const uploadResult = await googleDriveService.uploadFile(finalVideo);
                 driveLink = uploadResult.webViewLink;
                 log(`Uploaded to Drive: ${driveLink}`);
+
+                // Delete local file after successful upload
+                if (driveLink && fs.existsSync(finalVideo)) {
+                    fs.unlinkSync(finalVideo);
+                    log(`Deleted local file ${finalVideo} after successful upload.`);
+                }
             } catch (uploadErr) {
                 error(`Upload to Drive failed for video ${videoId}`, uploadErr);
             }
