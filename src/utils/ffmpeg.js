@@ -6,23 +6,51 @@ const ffmpegPath = require('ffmpeg-static');
 const ffprobePath = require('ffprobe-static').path;
 
 // Set FFMPEG path to the static binary
-if (ffmpegPath) {
-    ffmpeg.setFfmpegPath(ffmpegPath);
-    console.log(`FFmpeg path set to: ${ffmpegPath}`);
-} else if (process.env.FFMPEG_PATH) {
-    ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+let finalFfmpegPath = ffmpegPath;
+if (process.env.FFMPEG_PATH) {
+    finalFfmpegPath = process.env.FFMPEG_PATH;
+}
+
+if (finalFfmpegPath) {
+    if (fs.existsSync(finalFfmpegPath)) {
+        ffmpeg.setFfmpegPath(finalFfmpegPath);
+        console.log(`FFmpeg path set to: ${finalFfmpegPath}`);
+    } else {
+        console.warn(`Warning: FFmpeg binary not found at ${finalFfmpegPath}. Fluent-ffmpeg will rely on system path.`);
+    }
 }
 
 if (ffprobePath) {
-    ffmpeg.setFfprobePath(ffprobePath);
     console.log(`FFprobe path set to: ${ffprobePath}`);
 }
 
 const generateTextVideo = (content, outputPath, options = {}) => {
     const fontSize = options.fontSize || 64;
     const fontColor = options.fontColor || 'black';
-    // Use Arial on Windows, or fallback to default if not found (though hardcoded here)
-    const fontFile = 'C:/Windows/Fonts/arial.ttf';
+    // Cross-platform font selection
+    let fontFile = 'Arial'; // System default fallback
+
+    // Check for a local asset font first
+    const localFontPath = path.join(process.cwd(), 'assets', 'fonts', 'arial.ttf');
+
+    if (fs.existsSync(localFontPath)) {
+        fontFile = localFontPath.replace(/\\/g, '/');
+    } else if (process.platform === 'win32') {
+        fontFile = 'C:/Windows/Fonts/arial.ttf';
+    } else {
+        // Linux fallbacks
+        const linuxFonts = [
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/usr/share/fonts/truetype/freefont/FreeSans.ttf'
+        ];
+        for (const f of linuxFonts) {
+            if (fs.existsSync(f)) {
+                fontFile = f;
+                break;
+            }
+        }
+    }
 
     return new Promise((resolve, reject) => {
         let filterChain = [];
